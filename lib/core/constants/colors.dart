@@ -20,7 +20,9 @@ class PColors {
 
   //Background Container Colors
   static const Color containerBackground = Color(0xff8a4cff);
-
+    //Shimmer colors
+  static const Color shimmerbasecolor = Color.fromARGB(255, 231, 231, 231);
+  static const Color shimmerhighlightcolor = Color.fromARGB(255, 245, 245, 245);
   //gradient colors
   static const Color gradient1 = Color.fromRGBO(187, 63, 221, 1);
   static const Color gradient2 = Color.fromRGBO(251, 109, 169, 1);

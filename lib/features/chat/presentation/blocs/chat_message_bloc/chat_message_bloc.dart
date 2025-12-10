@@ -24,7 +24,6 @@ class ChatMessageBloc extends Bloc<ChatMessageEvent, ChatMessageState> {
       );
     });
 
-    // 👇 New: Send message
     on<SendMessageEvent>((event, emit) async {
       try {
         await chatService.sendMessage(event.receiverId, event.message);

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:perfect_super_admin/features/manage/presentation/cubits/tutor_request_cubit.dart';
+import 'package:perfect_super_admin/features/manage/presentation/cubits/tutor_cubit/tutor_request_cubit.dart';
 import 'package:perfect_super_admin/features/manage/presentation/widgets/tutor_request_card.dart';
 
 
@@ -60,7 +60,7 @@ class TutorRequestsStream extends StatelessWidget {
                 qualification: data['qualification'] ?? '',
                 certificates: certificates as  List<Map<String, dynamic>>,
                 selectedCourses:
-                    List<String>.from(data['selectedCourses'] ?? []),
+                    List<Map<String,dynamic>>.from(data['selectedCourses'] ?? []),
                 onAccept: () {
                   context.read<TutorRequestCubit>().acceptRequest(docId);
                   Navigator.pop(context);

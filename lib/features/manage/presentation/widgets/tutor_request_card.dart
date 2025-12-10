@@ -9,7 +9,7 @@ class TutorRequestCard extends StatelessWidget {
   final String photoUrl;
   final String qualification;
   final List<Map<String, dynamic>> certificates;
-  final List<dynamic> selectedCourses;
+  final List<Map<String,dynamic>> selectedCourses;
   final VoidCallback onAccept;
   final VoidCallback onReject;
 
@@ -136,7 +136,7 @@ class TutorRequestCard extends StatelessWidget {
                 children: selectedCourses
                     .map((course) => Chip(
                       
-                      label: Text(course.toString())))
+                      label: Text(course['name'].toString())))
                     .toList(),
               ),
               const SizedBox(height: 20),

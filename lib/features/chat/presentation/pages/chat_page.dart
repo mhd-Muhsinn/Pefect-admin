@@ -1,87 +1,129 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:perfect_super_admin/features/chat/presentation/blocs/bloc/chat_bloc.dart';
+import 'package:perfect_super_admin/core/constants/colors.dart';
+import 'package:perfect_super_admin/core/widgets/common/custom_appbar.dart';
 import 'package:perfect_super_admin/features/chat/presentation/blocs/chat_message_bloc/chat_message_bloc.dart';
-import 'package:perfect_super_admin/modules/custom_text_field/widget/text_field.dart';
+import 'package:perfect_super_admin/features/chat/presentation/widgets/message_box.dart';
+import 'package:perfect_super_admin/features/chat/presentation/widgets/message_box_shimmer.dart';
 
-class ChatPage extends StatelessWidget {
-  final String name;
-  final String receiverId;
-  ChatPage({super.key, required this.name, required this.receiverId});
 
-  //message controller
-  final TextEditingController _messageController = TextEditingController();
+
+class ChatScreen extends StatelessWidget {
+  final String recevierId;
+  final String receiverName;
+
+  ChatScreen({
+    super.key,
+    required this.recevierId,
+    required this.receiverName,
+  });
+
+  final TextEditingController _msgcontroller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    context.read<ChatMessageBloc>().add(LoadMessagesEvent(receiverId));
+    context.read<ChatMessageBloc>().add(LoadMessagesEvent(recevierId));
     return Scaffold(
-      appBar: AppBar(
-        title: Text(name),
-      ),
+      backgroundColor: PColors.backgrndPrimary,
+      appBar: CustomAppBar(title: receiverName),
       body: Column(
         children: [
-          //fetchh messages..
           Expanded(child: _buildMessageList()),
-
-          //inputbox
-          _buildMessageBox(context)
+          _buildMessageBox(context),
         ],
       ),
     );
   }
 
-  //all messages build widget
   Widget _buildMessageList() {
     return BlocBuilder<ChatMessageBloc, ChatMessageState>(
       builder: (context, state) {
-        if (state is MessagesLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is MessagesLoaded) {
-          return ListView(
-              children:
-                  state.messages.map((msg) => _buildMessageItem(msg)).toList());
+        if (state is MessagesLoaded) {
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            reverse: true,
+            itemCount: state.messages.length,
+            itemBuilder: (context, index) {
+              final msg = state.messages[state.messages.length - 1 - index];
+              bool isSender = msg["receiverID"] != recevierId;
+              return MessageBox(
+                msg: msg["message"],
+                isSender: isSender,
+              );
+            },
+          );
+        } else if (state is MessagesLoading) {
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+            itemCount: 13,
+            reverse: true,
+            itemBuilder: (context, index) {
+              // Alternate shimmer bubbles left/right
+              bool isSender = index % 2 == 0;
+              return MessageBoxShimmer(isSender: isSender);
+            },
+          );
         } else if (state is MessagesError) {
-          return Text("Error: ${state.error}");
+          return Center(child: Text("Error: ${state.error}"));
         }
         return const Center(child: Text("No messages yet"));
       },
     );
   }
 
-  //each messge item
-  Widget _buildMessageItem(Map<String, dynamic> msg) {
-    //message alignment
-    bool isAdmin = msg["senderID"] == receiverId;
-
-    var alignment = isAdmin ? Alignment.centerLeft : Alignment.centerRight;
-
-    return Container(
-        alignment: alignment,
-        margin: EdgeInsets.only(right: 25),
-        child: Text(msg["message"]));
-  }
-
   Widget _buildMessageBox(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: CustomTextFormField(
-            hintText: "Type Something..",
-            prefixIcon: Icons.message,
-            controller: _messageController,
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: PColors.white,
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, -2))
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _msgcontroller,
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(
+                  hintText: "Type a message...",
+                  hintStyle: TextStyle(color: Colors.grey.shade600),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: PColors.primaryVariant,
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white),
+                onPressed: () {
+                  if (_msgcontroller.text.trim().isNotEmpty) {
+                    context.read<ChatMessageBloc>().add(SendMessageEvent(
+                        recevierId,
+                        _msgcontroller.text.trim()
+                     ));
+                    _msgcontroller.clear();
+                  }
+                },
+              ),
+            )
+          ],
         ),
-        IconButton(
-            onPressed: () {
-              context
-                  .read<ChatMessageBloc>()
-                  .add(SendMessageEvent(receiverId, _messageController.text));
-
-              _messageController.clear();
-            },
-            icon: Icon(Icons.send))
-      ],
+      ),
     );
   }
 }

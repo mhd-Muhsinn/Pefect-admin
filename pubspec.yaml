@@ -39,6 +39,7 @@ dependencies:
   #state Managment
   bloc: ^9.0.0
   flutter_bloc: ^9.1.1
+  equatable: ^2.0.7
 
   #route 
   go_router: ^15.2.4
@@ -60,6 +61,7 @@ dependencies:
   video_player: ^2.10.0
   crypto: ^3.0.6
   shimmer: ^3.0.0
+  lottie: ^3.3.1
   
 
 dev_dependencies:
@@ -71,7 +73,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/logos/
+    - assets/images/
+    - assets/lottie/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

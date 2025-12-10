@@ -15,7 +15,11 @@ class FirebaseCourseService {
       required String courseType,
       required List<Map<String, dynamic>> videos,
       String? thumbnailId}) async {
-    final courseRef = await _firestore.collection('courses').add({
+    final courseRef = _firestore.collection('courses').doc();
+
+    await _firestore.collection('courses').doc(courseRef.id).set(
+      {
+      'docId':courseRef.id,  
       'name': name,
       'description': description,
       'price': price,
@@ -27,7 +31,8 @@ class FirebaseCourseService {
       'thumbnailUrl': thumbnailUrl,
       'thumbnail_id': thumbnailId ?? '',
       'createdAt': FieldValue.serverTimestamp(),
-    });
+    }
+    );
 
     for (final video in videos) {
       final videoRef = courseRef.collection('videos').doc();
@@ -39,9 +44,7 @@ class FirebaseCourseService {
     await _firestore
         .collection('course_sales_report')
         .doc(courseRef.id)
-        .set({
-          'name' : name
-        });
+        .set({'name': name});
   }
 
   Future<List<Map<String, dynamic>>> fetchVideos(String courseId) async {

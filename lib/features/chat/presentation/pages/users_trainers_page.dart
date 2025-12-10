@@ -113,20 +113,8 @@ class UsersTrainersPage extends StatelessWidget {
 
   Widget _buildTrainerUserListItem(
       Map<String, dynamic> userData, BuildContext context) {
-    return ChatUserTile(
-      nameUT: userData['name'],
-      uidUT: userData['uid'],
-      onTap: () {
-        Navigator.pushNamed(context, '/chatpage', arguments: {
-          'name': userData['name'],
-          'receiverId': userData['uid']
-        });
-        // Navigator.push(
-        //     context,
-        //     MaterialPageRoute(
-        //         builder: (context) => ChatPage(
-        //             name: userData['name'], receiverId: userData['uid'])));
-      },
+    return ChatTile(
+        UserOrtutor: userData,
     );
   }
 }

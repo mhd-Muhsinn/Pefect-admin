@@ -31,7 +31,7 @@ class AppRoutess {
         final name = args['name'] as String?;
         final receiverId = args['receiverId'] as String?;
         return _buildRoute(
-            ChatPage(name: name ?? '', receiverId: receiverId ?? ''), settings);
+            ChatScreen(receiverName: name ?? '', recevierId: receiverId ?? ''), settings);
       default:
         return _buildRoute(
             Scaffold(
