@@ -36,7 +36,6 @@ class TransactionsCubit extends Cubit<TransactionsState> {
     final query = state.search.toLowerCase().trim();
 
     final filtered = state.allSales.where((s) {
-      // defensive access — try properties, otherwise map lookups
       final course = _getStringProperty(s, 'courseName').toLowerCase();
       final customer = _getStringProperty(s, 'customerName').toLowerCase();
 
@@ -59,7 +58,7 @@ class TransactionsCubit extends Cubit<TransactionsState> {
     emit(state.copyWith(filteredSales: filtered));
   }
 
-  // Helpers to robustly read dynamic sale objects (works with Map or objects)
+  // Helpers to  read dynamic sale objects 
   String _getStringProperty(dynamic s, String key) {
     try {
       final v = (s as dynamic).toJson != null ? (s as dynamic).toJson()[key] : (s as dynamic).$__getProperty__(key);
@@ -106,7 +105,6 @@ class TransactionsCubit extends Cubit<TransactionsState> {
       if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
       if (v is String) return DateTime.parse(v);
     } catch (_) {}
-    // fallback very old date so sorting still works
     return DateTime.fromMillisecondsSinceEpoch(0);
   }
 }

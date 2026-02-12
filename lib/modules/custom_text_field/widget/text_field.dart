@@ -7,7 +7,10 @@ import 'package:perfect_super_admin/modules/custom_text_field/cubit/obscure_text
 class CustomTextFormField extends StatelessWidget {
   final TextEditingController? controller;
   final String hintText;
-  final IconData prefixIcon;
+
+  /// NOW OPTIONAL
+  final IconData? prefixIcon;
+
   final Widget? suffixIcon;
   final bool obscureText;
   final String? Function(String?)? validator;
@@ -22,12 +25,12 @@ class CustomTextFormField extends StatelessWidget {
     super.key,
     this.controller,
     required this.hintText,
-    required this.prefixIcon,
+    this.prefixIcon, // now optional
+    this.suffixIcon,
     this.onchanged,
     this.initialValue,
     this.obscureText = false,
     this.validator,
-    this.suffixIcon,
     this.keyboardType,
     this.prefixText,
     this.maxLength,
@@ -41,44 +44,59 @@ class CustomTextFormField extends StatelessWidget {
         create: (_) => ObscureTextCubit(),
         child: BlocBuilder<ObscureTextCubit, bool>(
           builder: (context, isObscure) {
-            return _buildTextFormField(context, isObscure);
+            return _buildTextField(context, isObscure);
           },
         ),
       );
     } else {
-      return _buildTextFormField(context, false);
+      return _buildTextField(context, false);
     }
   }
 
-  Widget _buildTextFormField(BuildContext context, bool isObscure) {
+  Widget _buildTextField(BuildContext context, bool isObscure) {
     return TextFormField(
-      onChanged: onchanged,
-      initialValue: initialValue,
       controller: controller,
-      keyboardType: keyboardType,
+      initialValue: controller == null ? initialValue : null,
+      onChanged: onchanged,
       validator: validator,
+      keyboardType: keyboardType,
       obscureText: obscureText && isObscure,
       maxLength: maxLength,
       inputFormatters: inputFormatters,
-     minLines: keyboardType == TextInputType.multiline ? 1 : 1, // 👈
-     maxLines: keyboardType == TextInputType.multiline ? null : 1, // 👈
+      minLines: keyboardType == TextInputType.multiline ? 1 : 1,
+      maxLines: keyboardType == TextInputType.multiline ? null : 1,
+      style: const TextStyle(fontSize: 15),
+
       decoration: InputDecoration(
         prefixText: prefixText,
-        prefixIcon: Icon(prefixIcon, color: PColors.containerBackground),
+
+        /// IMPORTANT: Only show prefixIcon when provided
+        prefixIcon: prefixIcon != null
+            ? Icon(prefixIcon, color: PColors.containerBackground)
+            : null,
+
+        /// Obscure button OR custom suffix
         suffixIcon: obscureText
             ? IconButton(
                 icon: Icon(
                   isObscure ? Icons.visibility_off : Icons.visibility,
                   color: PColors.containerBackground,
                 ),
-                onPressed: () {
-                  context.read<ObscureTextCubit>().toggle();
-                },
+                onPressed: () => context.read<ObscureTextCubit>().toggle(),
               )
             : suffixIcon,
+
         labelText: hintText,
         labelStyle: TextStyle(
-            color: Colors.grey[800], fontWeight: FontWeight.w400), //change itt
+          color: Colors.grey[800],
+          fontWeight: FontWeight.w400,
+        ),
+
+        filled: true,
+        fillColor: Colors.white,
+
+        counterText: '',
+
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: PColors.containerBackground),
@@ -93,12 +111,8 @@ class CustomTextFormField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.red),
+          borderSide: const BorderSide(color: Colors.red),
         ),
-
-        filled: true,
-        fillColor: Colors.white,
-        counterText: '', // Hides the character counter
       ),
     );
   }

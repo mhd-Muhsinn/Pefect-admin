@@ -60,7 +60,7 @@ class LogInPage extends StatelessWidget {
   Widget _buildLoginIllustraion() {
     return Container(
       color: PColors.containerBackground,
-      child: Image.asset(PImages.loginIllustraion),
+      child: Image.asset(AppImages.loginIllustraion),
     );
   }
 

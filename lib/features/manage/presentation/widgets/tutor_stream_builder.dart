@@ -34,7 +34,7 @@ class TutorsStreamBuilder extends StatelessWidget {
               name: tutor['name'],
               email: tutor['email'],
               photoUrl: tutor['photourl'] ?? '',
-              createdAt: tutor['createdAt'] as Timestamp,
+              createdAt: tutor['createdAt'] as Timestamp, onMessageTap: () {  }, tutorId: tutor['uid'],
             );
           },
         );

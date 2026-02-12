@@ -9,7 +9,6 @@ import 'package:perfect_super_admin/core/utils/responsive_config.dart';
 import 'package:perfect_super_admin/core/utils/snackbar_helper.dart';
 import 'package:perfect_super_admin/features/manage/presentation/blocs/bloc/course_bloc.dart';
 import 'dart:convert';
-
 import 'package:perfect_super_admin/features/manage/presentation/cubits/course_thumbnail_cubit.dart';
 import 'package:perfect_super_admin/features/manage/presentation/cubits/course_video_cubit.dart';
 import 'package:perfect_super_admin/features/manage/presentation/cubits/cubit/course_selection_state_cubit.dart';
@@ -96,7 +95,83 @@ class CloudinaryService {
       return;
     }
   }
+
+    ///  (FOR DAILY INSIGHTS, PROFILE, ETC.)
+  Future<Map<String, dynamic>?> uploadByType({
+    required File file,
+    required String resourceType, // image | video | raw
+    required String folder,
+  }) {
+    return _upload(
+      file,
+      resourceType: resourceType,
+      folder: folder,
+    );
+  }
+
+   Future<void> deleteByType({
+    required String publicId,
+    required String resourceType,
+  }) {
+    return delete(
+      publicId,
+      resourceType: resourceType,
+    );
+  }
+
+    Future<Map<String, dynamic>?> _upload(
+    File file, {
+    required String resourceType,
+    required String folder,
+  }) async {
+    final uploadUrl = Uri.parse(
+      'https://api.cloudinary.com/v1_1/$cloudName/$resourceType/upload',
+    );
+
+    try {
+      final request = http.MultipartRequest('POST', uploadUrl)
+        ..fields['upload_preset'] = uploadPreset
+        ..fields['folder'] = folder
+        ..files.add(await http.MultipartFile.fromPath('file', file.path));
+
+      final response = await request.send();
+      final res = await http.Response.fromStream(response);
+
+      if (response.statusCode == 200) {
+        return json.decode(res.body);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+   Future<void> delete(
+    String publicId, {
+    required String resourceType,
+  }) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    final signatureString =
+        'public_id=$publicId&timestamp=$timestamp$apiSecret';
+    final signature = sha1.convert(utf8.encode(signatureString)).toString();
+
+    final url = Uri.parse(
+      'https://api.cloudinary.com/v1_1/$cloudName/$resourceType/destroy',
+    );
+
+    await http.post(url, body: {
+      'public_id': publicId,
+      'api_key': apikey,
+      'timestamp': timestamp.toString(),
+      'signature': signature,
+    });
+  }
+  
 }
+
+
+
 
 void submit(
     BuildContext context,

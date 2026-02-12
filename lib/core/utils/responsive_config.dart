@@ -22,12 +22,15 @@ class ResponsiveConfig {
   double percentHeight(double percent) => screenHeight * percent;
 
   double get blocksizehorizontal => screenWidth / 100;
-  double get blocksizeveritical=> screenHeight / 100;
-  // Add to your ResponsiveConfig class
-double get tutorCardAspectRatio {
-  // Base ratio for mobile (adjust as needed)
-  double baseRatio = 0.8;
-  final heightFactor = screenHeight / 800; 
-  return baseRatio * heightFactor.clamp(0.8, 1.2); 
-}
+  double get blocksizeveritical => screenHeight / 100;
+
+  /// Scalable Font Size
+  double sp(double percent) {
+    return (screenWidth + screenHeight) / 2 * percent / 100;
+  }
+
+  double get keyboardHeight => MediaQuery.of(context).viewInsets.bottom;
+
+  /// Optional safe height when keyboard opens
+  double get availableHeight => screenHeight - keyboardHeight;
 }

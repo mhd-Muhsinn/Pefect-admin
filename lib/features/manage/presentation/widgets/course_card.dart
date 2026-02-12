@@ -38,10 +38,7 @@ class CourseCard extends StatelessWidget {
     required this.language
   });
 
-  String formatDate(Timestamp timestamp) {
-    final date = timestamp.toDate();
-    return 'Joined on ${DateFormat.yMMMMd().format(date)}';
-  }
+
 
   @override
   Widget build(BuildContext context) {

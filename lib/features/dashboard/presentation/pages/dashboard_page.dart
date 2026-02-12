@@ -1,14 +1,21 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
-// Keep your existing imports
+import 'package:intl/intl.dart';
 import 'package:perfect_super_admin/core/constants/colors.dart';
-import 'package:perfect_super_admin/core/constants/sizes.dart';
+import 'package:perfect_super_admin/core/services/permission_service.dart';
 import 'package:perfect_super_admin/core/utils/responsive_config.dart';
-import 'package:perfect_super_admin/features/dashboard/presentation/pages/revenue_page.dart';
-import 'package:perfect_super_admin/features/dashboard/presentation/widgets/info_card.dart'; // Ensure this widget is styled well too, or see my inline suggestion
-import 'package:perfect_super_admin/features/dashboard/presentation/widgets/piechart_widget.dart';
 import 'package:perfect_super_admin/features/dashboard/presentation/widgets/recent_report_sheet.dart';
+
+import '../../../../main.dart';
+import '../../data/repositories/stats_repository.dart';
+import '../../data/services/stats_service.dart';
+import '../blocs/revenue_breakdown/revenue_breakdown_cubit.dart';
+import '../blocs/salesreport_cubit/salesreport_cubit.dart';
+import '../blocs/stats_cubit/stats_cubit.dart';
+import '../blocs/stats_cubit/stats_state.dart';
+import '../widgets/piechart_widget.dart';
+import 'revenue_page.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -16,195 +23,360 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = ResponsiveConfig(context);
-    final theme = Theme.of(context);
 
-    return Scaffold(
-      // Use a slightly off-white background for contrast against white cards
-      backgroundColor: PColors.backgrndPrimary,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: size.percentWidth(0.05), vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Top Bar
-              const ProfileBar(),
-              
-              SizedBox(height: size.percentHeight(0.03)),
+    // Create repository and service
+    final repository = DashboardRepository();
+    final service = DashboardService(repository);
 
-              // 2. Welcome/Stats Header
-              Text(
-                "Overview",
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              
-              // 3. Info Cards (Refined Layout)
-              DashboardCards(size: size),
-              
-              SizedBox(height: size.percentHeight(0.03)),
-
-              // 4. Chart Section (Modernized)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => StatisticsCubit(service)..startListening(),
+        ),
+        BlocProvider(
+          create: (context) =>
+              SalesReportCubit(service)..startListening(limit: 8),
+        ),
+        BlocProvider(
+          create: (context) => RevenueBreakdownCubit(service)..startListening(),
+        ),
+      ],
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FE),
+        body: CustomScrollView(
+          slivers: [
+            // App Bar with Gradient
+            SliverAppBar(
+              expandedHeight: 180,
+              floating: false,
+              pinned: true,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        PColors.primary,
+                        PColors.primary.withOpacity(0.8),
+                        PColors.gradient3
+                      ],
                     ),
-                  ],
-                ),
-                child: ChartReport(size: size),
-              ),
-
-              SizedBox(height: size.percentHeight(0.03)),
-
-              //  Recent Reports Header with Action
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Recent Transactions",
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
-                  TextButton(
-                    onPressed: () => Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => const RevenuePage())
+                  child: SafeArea(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: size.percentWidth(0.05),
+                        vertical: 20,
+                      ),
+                      child: const ModernProfileBar(),
                     ),
-                    child: const Text("View All"),
                   ),
-                ],
-              ),
-              
-              const SizedBox(height: 10),
-
-              // 6. Recent Report Widget (Container styled)
-              Container(
-                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4)),
-                  ],
                 ),
-                child: RecentReportSheet(size: size),
               ),
-              
-              // Bottom spacing
-              const SizedBox(height: 30),
-            ],
-          ),
+            ),
+
+            // Content
+            SliverPadding(
+              padding: EdgeInsets.symmetric(
+                horizontal: size.percentWidth(0.05),
+                vertical: 20,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // Stats Cards
+                  const ModernStatsCards(),
+
+                  const SizedBox(height: 24),
+
+                
+                  // const ModernChartSection(),
+
+                  const SizedBox(height: 24),
+
+                  // Recent Transactions Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: PColors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Iconsax.chart_square,
+                              color: PColors.primary,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Recent Transactions",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => RevenuePage()));
+                        },
+                        icon: const Text("View All"),
+                        label: const Icon(Icons.arrow_forward_ios, size: 14),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Sales Table
+                  const ModernSalesTable(),
+
+                  const SizedBox(height: 40),
+                ]),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class ProfileBar extends StatelessWidget {
-  const ProfileBar({super.key});
+class ModernProfileBar extends StatefulWidget {
+  const ModernProfileBar({super.key});
+
+  @override
+  State<ModernProfileBar> createState() => _ModernProfileBarState();
+}
+
+class _ModernProfileBarState extends State<ModernProfileBar> {
+  @override
+  void initState() {
+    super.initState();
+    PermissionService().requestStorage();
+    PermissionService().requestNotificationPermission(notifications);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final now = DateTime.now();
+    final dateStr = DateFormat('EEEE, MMM d').format(now);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Avatar
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.blue.shade100,
-            image: const DecorationImage(
-              // Placeholder image, replace with user url
-              image: NetworkImage("https://i.pravatar.cc/150?img=11"), 
-              fit: BoxFit.cover,
+        // Top Row with Avatar and Notification
+        Row(
+          children: [
+            // Avatar with online indicator
+            Stack(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    image: const DecorationImage(
+                      image: NetworkImage("https://i.pravatar.cc/150?img=11"),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 2,
+                  right: 2,
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00E676),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
+
+            const Spacer(),
+
+            // Notification Button
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: IconButton(
+                onPressed: () {},
+                icon: Badge(
+                  label: const Text('3'),
+                  backgroundColor: PColors.error,
+                  textColor: Colors.white,
+                  child: const Icon(
+                    Iconsax.notification,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        
-        // Greeting
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Welcome back,",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-              const Text(
-                "Super Admin",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ],
+
+        const SizedBox(height: 20),
+
+        // Greeting Text
+        Text(
+          "Welcome back, Admin! 👋",
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
         ),
 
-        // Notification Icon
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+        const SizedBox(height: 4),
+
+        // Date
+        Text(
+          dateStr,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 14,
           ),
-          child: IconButton(
-            onPressed: () {},
-            icon: Badge(
-              label: const Text('3'),
-              backgroundColor: PColors.error,
-              child: const Icon(Iconsax.notification, color: Colors.black87),
-            ),
-          ),
-        )
+        ),
       ],
     );
   }
 }
 
-class DashboardCards extends StatelessWidget {
-  const DashboardCards({super.key, required this.size});
-
-  final ResponsiveConfig size;
+class ModernStatsCards extends StatelessWidget {
+  const ModernStatsCards({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildModernInfoCard(
-            title: "Total Users",
-            value: "2,403",
-            icon: Iconsax.people,
-            color: const Color(0xFF6B4EFF), // Purple accent
-            bgColor: const Color(0xFFF2F0FF),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildModernInfoCard(
-            title: "Total Sales",
-            value: "₹ 1.2Cr",
-            icon: Iconsax.money,
-            color: const Color(0xFF00C853), // Green accent
-            bgColor: const Color(0xFFE8F5E9),
-          ),
-        ),
-      ],
+    final size = ResponsiveConfig(context);
+
+    return BlocBuilder<StatisticsCubit, StatisticsState>(
+      builder: (context, state) {
+        if (state.loading) {
+          return _buildLoadingSkeleton(size);
+        }
+
+        if (state.error != null) {
+          return Center(
+            child: Text(
+              'Error loading statistics',
+              style: TextStyle(color: Colors.red.shade400),
+            ),
+          );
+        }
+
+        if (state.statistics != null) {
+          final stats = state.statistics!;
+
+          return Column(
+            children: [
+              // First Row - Main Stats
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildGlassCard(
+                      title: "Total Users",
+                      value: _formatNumber(stats.totalUsers),
+                      icon: Iconsax.people,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                      ),
+                      trend: "+12.5%",
+                      trendUp: true,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildGlassCard(
+                      title: "Total Revenue",
+                      value: "₹${_formatCurrency(stats.totalIncome)}",
+                      icon: Iconsax.money_4,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+                      ),
+                      trend: "+8.3%",
+                      trendUp: true,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Second Row - Secondary Stats
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildGlassCard(
+                      title: "Total Courses",
+                      value: _formatNumber(stats.totalCourses),
+                      icon: Iconsax.book_1,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFA709A), Color(0xFFFEE140)],
+                      ),
+                      trend: "+3",
+                      trendUp: true,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildGlassCard(
+                      title: "Total Tutors",
+                      value: _formatNumber(stats.totalTutors),
+                      icon: Iconsax.teacher,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF4776E6), Color(0xFF8E54E9)],
+                      ),
+                      trend: "+2",
+                      trendUp: true,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
     );
   }
 
-  Widget _buildModernInfoCard({
+  Widget _buildGlassCard({
     required String title,
     required String value,
     required IconData icon,
-    required Color color,
-    required Color bgColor,
+    required Gradient gradient,
+    String? trend,
+    bool trendUp = true,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -214,7 +386,7 @@ class DashboardCards extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
+            blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
@@ -226,117 +398,123 @@ class DashboardCards extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              // Optional: % growth indicator
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20)
+                  gradient: gradient,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient.colors.first.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Text("+12%", style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
-              )
+                child: Icon(icon, color: Colors.white, size: 24),
+              ),
+              if (trend != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: trendUp
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFFFEBEE),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        trendUp ? Icons.trending_up : Icons.trending_down,
+                        size: 14,
+                        color: trendUp
+                            ? const Color(0xFF4CAF50)
+                            : const Color(0xFFF44336),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        trend,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: trendUp
+                              ? const Color(0xFF4CAF50)
+                              : const Color(0xFFF44336),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
             value,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
     );
   }
-}
 
-class ChartReport extends StatelessWidget {
-  final ResponsiveConfig size;
-  const ChartReport({super.key, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildLoadingSkeleton(ResponsiveConfig size) {
     return Column(
       children: [
-        // Header within the chart card
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Monthly Revenue",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Text(
-                  "Aug - Sep 2024",
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-                ),
-              ],
-            ),
-            IconButton(
-              onPressed: (){}, 
-              icon: const Icon(Icons.more_horiz, color: Colors.grey)
-            )
+            Expanded(child: _buildSkeletonCard()),
+            const SizedBox(width: 16),
+            Expanded(child: _buildSkeletonCard()),
           ],
         ),
-        const SizedBox(height: 20),
-        
-        // Chart + Legend Row
+        const SizedBox(height: 16),
         Row(
           children: [
-            // The Pie Chart
-            SizedBox(
-              height: 180,
-              width: 180,
-              child: Stack(
-                children: [
-                   const PieChartWidget(),
-                   // Center Text for Donut feel
-                   Center(
-                     child: Text("78%", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: PColors.primary)),
-                   )
-                ],
-              ),
-            ),
-            const SizedBox(width: 20),
-            
-            // Custom Legend
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _legendItem(color: Colors.blue, label: "Courses", value: "45%"),
-                  const SizedBox(height: 12),
-                  _legendItem(color: Colors.purple, label: "Mentoring", value: "30%"),
-                  const SizedBox(height: 12),
-                  _legendItem(color: Colors.orange, label: "E-Books", value: "25%"),
-                ],
-              ),
-            )
+            Expanded(child: _buildSkeletonCard()),
+            const SizedBox(width: 16),
+            Expanded(child: _buildSkeletonCard()),
           ],
         ),
       ],
     );
   }
 
-  Widget _legendItem({required Color color, required String label, required String value}) {
-    return Row(
-      children: [
-        Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 8),
-        Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-        const Spacer(),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-      ],
+  Widget _buildSkeletonCard() {
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(20),
+      ),
     );
+  }
+
+  String _formatNumber(int number) {
+    if (number >= 1000) {
+      return "${(number / 1000).toStringAsFixed(1)}K";
+    }
+    return number.toString();
+  }
+
+  String _formatCurrency(double amount) {
+    if (amount >= 10000000) {
+      return "${(amount / 10000000).toStringAsFixed(2)}Cr";
+    } else if (amount >= 100000) {
+      return "${(amount / 100000).toStringAsFixed(2)}L";
+    }
+    return amount.toStringAsFixed(0);
   }
 }

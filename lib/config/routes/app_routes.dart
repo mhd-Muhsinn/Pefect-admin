@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:perfect_super_admin/features/auth/presentation/pages/login_page.dart';
 import 'package:perfect_super_admin/features/auth/presentation/pages/splash_page.dart';
-import 'package:perfect_super_admin/features/chat/presentation/pages/chat_page.dart';
+import 'package:perfect_super_admin/features/communication/presentation/pages/chat_page.dart';
 import 'package:perfect_super_admin/features/manage/presentation/pages/add_course_page.dart';
 import 'package:perfect_super_admin/features/manage/presentation/pages/all_courses_pages.dart';
 import 'package:perfect_super_admin/features/manage/presentation/pages/manage_tutor_page.dart';
@@ -23,7 +23,7 @@ class AppRoutess {
       case '/addcoursePage':
         return _buildRoute(AddCoursePage(), settings);
       case '/tutorall':
-        return _buildRoute(TutorsGridView(), settings);
+        return _buildRoute(ManageTutorPage(), settings);
       case '/allcourses':
         return _buildRoute(AllCoursesPages(), settings);
       case '/chatpage':

@@ -1,4 +1,4 @@
-class PImages {
+class AppImages {
   //-App Logo
   static const String applogo = "assets/images/logos/logo.png";
 
@@ -9,4 +9,8 @@ class PImages {
   //-- lottie animations
 
   static const String noData = 'assets/lottie/no_data2.json';
+
+  //-- Placeholders
+
+  static const String userPlaceholder = "assets/images/placeholders/user_placeholder.png";
 }

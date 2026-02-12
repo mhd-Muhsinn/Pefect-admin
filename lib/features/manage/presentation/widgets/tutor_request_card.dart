@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:perfect_super_admin/core/constants/colors.dart';
+import 'package:perfect_super_admin/core/constants/image_strings.dart';
 import 'package:perfect_super_admin/core/utils/responsive_config.dart';
 
 class TutorRequestCard extends StatelessWidget {
@@ -9,7 +10,7 @@ class TutorRequestCard extends StatelessWidget {
   final String photoUrl;
   final String qualification;
   final List<Map<String, dynamic>> certificates;
-  final List<Map<String,dynamic>> selectedCourses;
+  final List<Map<String, dynamic>> selectedCourses;
   final VoidCallback onAccept;
   final VoidCallback onReject;
 
@@ -37,16 +38,28 @@ class TutorRequestCard extends StatelessWidget {
         shadowColor: PColors.containerBackground,
         elevation: 2,
         margin: EdgeInsets.symmetric(
-            horizontal: size.percentWidth(0.04), vertical: size.percentHeight(0.01)),
+            horizontal: size.percentWidth(0.04),
+            vertical: size.percentHeight(0.01)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: ListTile(
           contentPadding: EdgeInsets.symmetric(
-              horizontal: size.percentWidth(0.04), vertical: size.percentHeight(0.015)),
+              horizontal: size.percentWidth(0.04),
+              vertical: size.percentHeight(0.015)),
           leading: CircleAvatar(
-            backgroundImage: NetworkImage(photoUrl),
             radius: size.percentWidth(0.06),
+            backgroundColor: Colors.grey.shade200,
+            child: ClipOval(
+              child: FadeInImage(
+                placeholder: AssetImage(AppImages.userPlaceholder),
+                image: NetworkImage(photoUrl),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              ),
+            ),
           ),
-          title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+          title:
+              Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
           subtitle: Text(email),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
@@ -107,7 +120,9 @@ class TutorRequestCard extends StatelessWidget {
               Text("Qualification: $qualification",
                   style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 16),
-              Text("Certificates:", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text("Certificates:",
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -129,14 +144,15 @@ class TutorRequestCard extends StatelessWidget {
                 }).toList(),
               ),
               const SizedBox(height: 16),
-              Text("Selected Courses:", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text("Selected Courses:",
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 5),
               Wrap(
                 spacing: 6,
                 children: selectedCourses
-                    .map((course) => Chip(
-                      
-                      label: Text(course['name'].toString())))
+                    .map((course) =>
+                        Chip(label: Text(course['name'].toString())))
                     .toList(),
               ),
               const SizedBox(height: 20),
@@ -170,7 +186,6 @@ class TutorRequestCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-    
         insetPadding: EdgeInsets.zero,
         child: GestureDetector(
           onTap: () => Navigator.pop(context),
